@@ -43,43 +43,37 @@ end)
 
 local cvarHeightEnabled = GetConVar("sv_dynamicheight")
 local cvarHeightMaxManual = GetConVar("sv_dynamicheight_max_manual")
-local cvarHeightMinManual = GetConVar("sv_dynamicheight_min_manual")
-local cvarHeightMin = GetConVar("sv_dynamicheight_min")
 local cvarHeightMax = GetConVar("sv_dynamicheight_max")
 
 local function UpdateView(ply)
     if cvarHeightEnabled:GetBool() then
       -- Find the max and min height by spawning a dummy entity
       local height_max = 64
-      
-      
+
       -- Finds model's height
       local entity = ents.Create("base_anim")
       local entity2 = ents.Create("base_anim")
-      
+
       entity:SetModel(ply:GetModel())
       entity:ResetSequence(entity:LookupSequence("idle_all_01"))
       local bone = entity:LookupBone("ValveBiped.Bip01_Neck1")
       if bone then
         height_max = entity:GetBonePosition(bone).z + 5
       end
-          
+
       -- Removes test entities
       entity:Remove()
       entity2:Remove()
-      
-  
+
       -- Update player height
       local max = cvarHeightMax:GetInt()
-      
-            
+
       if cvarHeightMaxManual:GetBool() then
           return max
           else
               return height_max
-      end	
-      
-      
+      end
+
     else
       if ply.ec_ViewChanged then
         ply.ec_ViewChanged = nil
@@ -90,14 +84,14 @@ local function UpdateView(ply)
   end
 
 hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply, name, old, b)
-    if name == "IsLaying" && ply:IsPlayer() then
+    if name == "IsLaying" and ply:IsPlayer() then
         if b then -- Sets hull while prone.
             ply:SetHull(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull))
             ply:SetHullDuck(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull))
         else
             ply:ResetHull()
         end
- 
+
         if SERVER then
             local from, to, factor, mode
             if b then
@@ -111,6 +105,7 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
                 factor = 0.3
                 mode = TWEEN_EASE_SINE_IN
             end
+
             ply.layLerp = Tween(from, to, factor, mode)
             ply.layLerp:Start()
         end
@@ -128,7 +123,7 @@ if CLIENT then
         local b = !ply:GetNW2Bool("IsLaying")
         local tr = util.TraceEntity({ start = ply:GetPos(), endpos = ply:GetPos() + Vector(0, 0, 65 - qprone.goProne.Hull), filter = ply }, ply)
 
-        if !b && tr.Hit && force != true then
+        if !b and tr.Hit and force != true then
             ply:ChatPrint(qprone.goProne.CantGetUpText)
             ply:EmitSound("buttons/button17.wav")
             return
@@ -142,48 +137,46 @@ if CLIENT then
     end
 
     hook.Add( "StartCommand", "laying_move_start", function( ply, mv )
-        if ply:OnGround() && !vgui.GetKeyboardFocus() && !gui.IsGameUIVisible() && !gui.IsConsoleVisible() && system.HasFocus() or system.IsLinux() then
-            if input.IsKeyDown(sprint_keybind:GetInt()) then 
+        if ply:OnGround() and !vgui.GetKeyboardFocus() and !gui.IsGameUIVisible() and !gui.IsConsoleVisible() and system.HasFocus() or system.IsLinux() then
+            if input.IsKeyDown(sprint_keybind:GetInt()) then
                 was_pressed = true
                 resettime = CurTime() + 0.11 -- Time between button presses in seconds (make into slider?)
-            else 
-                if was_pressed then 
-                    if last_request < CurTime() then
-                        doubletap = !doubletap
-                        if !is_doubletap:GetBool() || doubletap then
-                            lay_request() 
-                        end
+            else
+                if was_pressed and last_request < CurTime() then
+                    doubletap = !doubletap
+                    if !is_doubletap:GetBool() || doubletap then
+                        lay_request()
                     end
-                end 
+                end
 
                 was_pressed = false
             end
 
-            if resettime ~= false && resettime < CurTime() then
+            if resettime != false and resettime < CurTime() then
                 resettime = false
                 doubletap = true
             end
         end
     end)
-    
+
     concommand.Add( "qprone_lay",lay_request)
 end
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
-    if (p:IsProne() && SERVER) && (p:GetMoveType() == MOVETYPE_NOCLIP || p:GetMoveType() == MOVETYPE_LADDER || p:WaterLevel() > 2) then p:ToggleLay(false) end
-    
+    if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP || p:GetMoveType() == MOVETYPE_LADDER || p:WaterLevel() > 2) then p:ToggleLay(false) end
+
     if p.layLerp and p.layLerp.running then
         p:SetViewOffset(Vector(0, 0, p.layLerp:GetValue()))
     end
 
-    if IsValid(p) && p:IsProne() then
+    if IsValid(p) and p:IsProne() then
         local seq = nil
-        
+
         if vel:LengthSqr() >= 225 then
             seq = p:LookupSequence( "prone_walktwohand" )
         else
             local weapon, holdType = p:GetActiveWeapon(), nil
-            if IsValid(weapon) then holdType = ((weapon:GetHoldType() != "" && weapon:GetHoldType()) || weapon.HoldType) end
+            if IsValid(weapon) then holdType = ((weapon:GetHoldType() != "" and weapon:GetHoldType()) || weapon.HoldType) end
 
             seq = p:LookupSequence(wep_anims[holdType] || "prone_ar2")
         end
