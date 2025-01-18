@@ -56,8 +56,20 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
         end
  
         if SERVER then
-            local from, to = (b && cvarHeightMax:GetInt() + 0 || qprone.goProne.ViewZ), (b && qprone.goProne.ViewZ || cvarHeightMax:GetInt() + 0) -- This sets the view height  gdi
-            ply.layLerp = Tween(from, to, (to == qprone.goProne.ViewZ && 0.7) || 0.3, (to == qprone.goProne.ViewZ && TWEEN_EASE_BOUNCE_OUT) || TWEEN_EASE_SINE_IN ) ply.layLerp:Start()
+            local from, to, factor, mode
+            if b then
+                from = cvarHeightMax:GetInt()
+                to = qprone.goProne.ViewZ
+                factor = 0.7
+                mode = TWEEN_EASE_BOUNCE_OUT
+            else
+                from = qprone.goProne.ViewZ
+                to = cvarHeightMax:GetInt()
+                factor = 0.3
+                mode = TWEEN_EASE_SINE_IN
+            end
+            ply.layLerp = Tween(from, to, factor, mode)
+            ply.layLerp:Start()
         end
     end
 end)
