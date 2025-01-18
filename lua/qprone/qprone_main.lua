@@ -129,7 +129,7 @@ if CLIENT then
             return
         end
 
-        if !ply:IsPlayer() || !ply:Alive() || ply:GetMoveType() == MOVETYPE_NOCLIP || ply:GetMoveType() == MOVETYPE_LADDER || !ply:OnGround() || ply:WaterLevel() > 2 then return end
+        if !ply:IsPlayer() or !ply:Alive() or ply:GetMoveType() == MOVETYPE_NOCLIP or ply:GetMoveType() == MOVETYPE_LADDER or !ply:OnGround() or ply:WaterLevel() > 2 then return end
 
         net.Start("lay_networking")
         net.WriteBool(b)
@@ -144,7 +144,7 @@ if CLIENT then
             else
                 if was_pressed and last_request < CurTime() then
                     doubletap = !doubletap
-                    if !is_doubletap:GetBool() || doubletap then
+                    if !is_doubletap:GetBool() or doubletap then
                         lay_request()
                     end
                 end
@@ -163,7 +163,7 @@ if CLIENT then
 end
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
-    if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP || p:GetMoveType() == MOVETYPE_LADDER || p:WaterLevel() > 2) then p:ToggleLay(false) end
+    if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP or p:GetMoveType() == MOVETYPE_LADDER or p:WaterLevel() > 2) then p:ToggleLay(false) end
 
     if p.layLerp and p.layLerp.running then
         p:SetViewOffset(Vector(0, 0, p.layLerp:GetValue()))
@@ -176,12 +176,12 @@ hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
             seq = p:LookupSequence( "prone_walktwohand" )
         else
             local weapon, holdType = p:GetActiveWeapon(), nil
-            if IsValid(weapon) then holdType = ((weapon:GetHoldType() != "" and weapon:GetHoldType()) || weapon.HoldType) end
+            if IsValid(weapon) then holdType = ((weapon:GetHoldType() != "" and weapon:GetHoldType()) or weapon.HoldType) end
 
-            seq = p:LookupSequence(wep_anims[holdType] || "prone_ar2")
+            seq = p:LookupSequence(wep_anims[holdType] or "prone_ar2")
         end
 
-        return -1, seq || "prone_ar2"
+        return -1, seq or "prone_ar2"
     end
 end)
 
