@@ -47,40 +47,40 @@ local cvarHeightMax = GetConVar("sv_dynamicheight_max")
 
 local function UpdateView(ply)
     if cvarHeightEnabled:GetBool() then
-      -- Find the max and min height by spawning a dummy entity
-      local height_max = 64
+    -- Find the max and min height by spawning a dummy entity
+    local height_max = 64
 
-      -- Finds model's height
-      local entity = ents.Create("base_anim")
-      local entity2 = ents.Create("base_anim")
+    -- Finds model's height
+    local entity = ents.Create("base_anim")
+    local entity2 = ents.Create("base_anim")
 
-      entity:SetModel(ply:GetModel())
-      entity:ResetSequence(entity:LookupSequence("idle_all_01"))
-      local bone = entity:LookupBone("ValveBiped.Bip01_Neck1")
-      if bone then
-        height_max = entity:GetBonePosition(bone).z + 5
-      end
+    entity:SetModel(ply:GetModel())
+    entity:ResetSequence(entity:LookupSequence("idle_all_01"))
+    local bone = entity:LookupBone("ValveBiped.Bip01_Neck1")
+        if bone then
+            height_max = entity:GetBonePosition(bone).z + 5
+        end
 
-      -- Removes test entities
-      entity:Remove()
-      entity2:Remove()
+    -- Removes test entities
+    entity:Remove()
+    entity2:Remove()
 
-      -- Update player height
-      local max = cvarHeightMax:GetInt()
+    -- Update player height
+    local max = cvarHeightMax:GetInt()
 
-      if cvarHeightMaxManual:GetBool() then
-          return max
-          else
-              return height_max
-      end
+    if cvarHeightMaxManual:GetBool() then
+        return max
+    else
+        return height_max
+    end
 
     else
-      if ply.ec_ViewChanged then
-        ply.ec_ViewChanged = nil
+        if ply.ec_ViewChanged then
+            ply.ec_ViewChanged = nil
         return 64
-      end
+        end
     end
-    return ply:GetViewOffset().z
+        return ply:GetViewOffset().z
   end
 
 hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply, name, old, b)

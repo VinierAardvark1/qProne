@@ -1,15 +1,15 @@
 -- Initial file
 
 hook.Add("Initialize", "qprone_INIT", function()
-    if SERVER then
+	if SERVER then
 		AddCSLuaFile("qprone/config.lua")
-        AddCSLuaFile("qprone/tween.lua")
-        AddCSLuaFile("qprone/qprone_main.lua")
+		AddCSLuaFile("qprone/tween.lua")
+		AddCSLuaFile("qprone/qprone_main.lua")
 	end
 
-    include("qprone/config.lua")
-    include("qprone/tween.lua")
-    include("qprone/qprone_main.lua")
+	include("qprone/config.lua")
+	include("qprone/tween.lua")
+	include("qprone/qprone_main.lua")
 
 	print("qProne loaded!")
 end)
@@ -21,7 +21,7 @@ end)
 
 if CLIENT then
 
-    hook.Add("PopulateToolMenu", "qprone_options_MENU", function()
+	hook.Add("PopulateToolMenu", "qprone_options_MENU", function()
 		spawnmenu.AddToolMenuOption("Options", "qProne Settings", "qprone_opts", "Controls", "", "", function(panel)
 			panel:SetName("Controls")
 
@@ -29,7 +29,7 @@ if CLIENT then
 				Label = "Enable Quick Prone",
 				Command = "qprone_enabled"
 			})
-			
+
 			panel:AddControl("Checkbox", {
 				Label = "Double-tap to prone?",
 				Command = "qprone_doubletap"
