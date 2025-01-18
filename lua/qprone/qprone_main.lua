@@ -41,10 +41,53 @@ hook.Add("SetupMove", "laying_move", function(ply, mv, cmd)
     end
 end)
 
+local cvarHeightEnabled = GetConVar("sv_dynamicheight")
+local cvarHeightMaxManual = GetConVar("sv_dynamicheight_max_manual")
+local cvarHeightMinManual = GetConVar("sv_dynamicheight_min_manual")
+local cvarHeightMin = GetConVar("sv_dynamicheight_min")
 local cvarHeightMax = GetConVar("sv_dynamicheight_max")
-if cvarHeightMax then -- If Dynamic Height isn't installed this will be nil
-    print(cvarHeightMax:GetInt()) -- This is the value to use for camera height
-end
+
+local function UpdateView(ply)
+    if cvarHeightEnabled:GetBool() then
+      -- Find the max and min height by spawning a dummy entity
+      local height_max = 64
+      
+      
+      -- Finds model's height
+      local entity = ents.Create("base_anim")
+      local entity2 = ents.Create("base_anim")
+      
+      entity:SetModel(ply:GetModel())
+      entity:ResetSequence(entity:LookupSequence("idle_all_01"))
+      local bone = entity:LookupBone("ValveBiped.Bip01_Neck1")
+      if bone then
+        height_max = entity:GetBonePosition(bone).z + 5
+      end
+          
+      -- Removes test entities
+      entity:Remove()
+      entity2:Remove()
+      
+  
+      -- Update player height
+      local max = cvarHeightMax:GetInt()
+      
+            
+      if cvarHeightMaxManual:GetBool() then
+          return max
+          else
+              return height_max
+      end	
+      
+      
+    else
+      if ply.ec_ViewChanged then
+        ply.ec_ViewChanged = nil
+        return 64
+      end
+    end
+    return ply:GetViewOffset().z
+  end
 
 hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply, name, old, b)
     if name == "IsLaying" && ply:IsPlayer() then
@@ -58,13 +101,13 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
         if SERVER then
             local from, to, factor, mode
             if b then
-                from = cvarHeightMax:GetInt()
+                from = UpdateView(ply)
                 to = qprone.goProne.ViewZ
                 factor = 0.7
                 mode = TWEEN_EASE_BOUNCE_OUT
             else
                 from = qprone.goProne.ViewZ
-                to = cvarHeightMax:GetInt()
+                to = UpdateView(ply)
                 factor = 0.3
                 mode = TWEEN_EASE_SINE_IN
             end
@@ -129,7 +172,7 @@ end
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
     if (p:IsProne() && SERVER) && (p:GetMoveType() == MOVETYPE_NOCLIP || p:GetMoveType() == MOVETYPE_LADDER || p:WaterLevel() > 2) then p:ToggleLay(false) end
     
-    if p.layLerp then
+    if p.layLerp and p.layLerp.running then
         p:SetViewOffset(Vector(0, 0, p.layLerp:GetValue()))
     end
 
