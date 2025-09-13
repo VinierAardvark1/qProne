@@ -113,8 +113,11 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
 end)
 
 if CLIENT then
-    local sprint_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
-    local is_doubletap = CreateClientConVar("qprone_doubletap", 1, true, false, "Enables double tapping your keybind to go prone. 1 is true, 0 is false.")
+    local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
+    local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, false, "Enables double tapping your keybind to go prone.")
+    local qprone_jump = CreateClientConVar("qprone_jump_enable", "1", 1, false, "Enables using the jump key to exit prone.")
+    local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 0, true, false, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+
     local last_request, resettime = 0, false
     local was_pressed, doubletap = false, true
 
@@ -138,14 +141,16 @@ if CLIENT then
 
     hook.Add( "StartCommand", "laying_move_start", function( ply, mv )
         if ply:OnGround() and !vgui.GetKeyboardFocus() and !gui.IsGameUIVisible() and !gui.IsConsoleVisible() and system.HasFocus() or system.IsLinux() then
-            if input.IsKeyDown(sprint_keybind:GetInt()) then
+            if input.IsKeyDown(qprone_keybind:GetInt()) then
                 was_pressed = true
                 resettime = CurTime() + 0.11 -- Time between button presses in seconds (make into slider?)
             else
                 if was_pressed and last_request < CurTime() then
                     doubletap = !doubletap
-                    if !is_doubletap:GetBool() or doubletap then
+                    if !qprone_doubletap:GetBool() or doubletap then
                         lay_request()
+
+                        -- last_request = CurTime() + 0.4 --Maybe.
                     end
                 end
 
@@ -159,8 +164,23 @@ if CLIENT then
         end
     end)
 
-    concommand.Add( "qprone_lay",lay_request)
+    concommand.Add( "qprone_lay", lay_request)
 end
+
+local qprone_jump_presstime = 0
+hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
+    if IsFirstTimePredicted() and ply:IsProne() and key == IN_JUMP then
+        if qprone_jump_enable == 1 then
+            ply:ToggleLay(false)
+        else
+            if qprone_jump_presstime > CurTime() then
+                ply:ToggleLay(false)
+            else
+                qprone_jump_presstime = CurTime() + 0.4
+            end
+        end
+    end
+end)
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
     if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP or p:GetMoveType() == MOVETYPE_LADDER or p:WaterLevel() > 2) then p:ToggleLay(false) end
@@ -196,6 +216,10 @@ if SERVER then
     end)
 
     hook.Add("DoPlayerDeath", "laying_death_exit", function(ply)
+        if ply:IsProne() then ply:ToggleLay(false) end
+    end)
+
+    hook.Add("PlayerSpawn", "prone.ExitOnDeath", function(ply)
         if ply:IsProne() then ply:ToggleLay(false) end
     end)
 end

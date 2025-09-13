@@ -24,6 +24,10 @@ if CLIENT then
 	hook.Add("PopulateToolMenu", "qprone_options_MENU", function()
 		spawnmenu.AddToolMenuOption("Options", "qProne Settings", "qprone_opts", "Controls", "", "", function(panel)
 			panel:SetName("Controls")
+			panel:AddControl("Header", {
+				Text = "",
+				Description = "Config menu for qProne."
+			})
 
 			panel:AddControl("Checkbox", {
 				Label = "Enable Quick Prone",
@@ -33,6 +37,16 @@ if CLIENT then
 			panel:AddControl("Checkbox", {
 				Label = "Double-tap to prone?",
 				Command = "qprone_doubletap"
+			})
+
+			panel:AddControl("Checkbox", {
+				Label = "Can press jump to get up",
+				Command = "qprone_jump"
+			})
+
+			panel:AddControl("Checkbox", {
+				Label = "Double-tap jump to get up",
+				Command = "qprone_jump_doubletap"
 			})
 
 			panel:AddControl("Numpad", {
