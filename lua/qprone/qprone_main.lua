@@ -110,13 +110,16 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
             ply.layLerp:Start()
         end
     end
+
 end)
+
 
 if CLIENT then
     local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
     local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, false, "Enables double tapping your keybind to go prone.")
     local qprone_jump = CreateClientConVar("qprone_jump_enable", "1", 1, false, "Enables using the jump key to exit prone.")
-    local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 0, true, false, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+    local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, false, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+    local qprone_delay = CreateClientConVar("qprone_delay", 0.00, true, false, "Sets the delay between prone instances.", 0, 10)
 
     local last_request, resettime = 0, false
     local was_pressed, doubletap = false, true
@@ -150,7 +153,7 @@ if CLIENT then
                     if !qprone_doubletap:GetBool() or doubletap then
                         lay_request()
 
-                        -- last_request = CurTime() + 0.4 --Maybe.
+                        last_request = CurTime() + qprone_delay:GetInt() -- Currently doesn't recognize any number after the decimal
                     end
                 end
 
@@ -176,7 +179,7 @@ hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
             if qprone_jump_presstime > CurTime() then
                 ply:ToggleLay(false)
             else
-                qprone_jump_presstime = CurTime() + 0.4
+                qprone_jump_presstime = CurTime() + 0.4 -- qprone_delay:GetInt()
             end
         end
     end

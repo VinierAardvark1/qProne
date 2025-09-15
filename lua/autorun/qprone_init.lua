@@ -53,6 +53,14 @@ if CLIENT then
 				Label = "Keybind",
 				Command = "qprone_keybind"
 			})
+
+			panel:AddControl("Slider", {
+				Label = "qProne Delay",
+				Command = "qprone_delay",
+				Min = 0.00,
+				Max = 10.00,
+				Type = "float"
+			})
 		end)
 	end)
 end
