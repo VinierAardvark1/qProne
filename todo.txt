@@ -1,0 +1,6 @@
+Fix "jump to exit prone" convars not working
+Allow "prone delay" convar to utilize numbers past the decimal
+Add "sprint to exit prone" (can probably be easily done after "jump to exit prone" is fixed)
+Dynamic Height 2 compatability(?)
+Omnimovement compatability(?)
+Make standalone from wOS(???)
