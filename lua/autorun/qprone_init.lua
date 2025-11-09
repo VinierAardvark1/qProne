@@ -39,15 +39,25 @@ if CLIENT then
 				Command = "qprone_doubletap"
 			})
 
-			panel:AddControl("Checkbox", {
-				Label = "Can press jump to get up",
-				Command = "qprone_jump"
-			})
+			-- panel:AddControl("Checkbox", {
+			-- 	Label = "Can press jump to get up",
+			-- 	Command = "qprone_jump"
+			-- })
 
-			panel:AddControl("Checkbox", {
-				Label = "Double-tap jump to get up",
-				Command = "qprone_jump_doubletap"
-			})
+			-- panel:AddControl("Checkbox", {
+			-- 	Label = "Double-tap jump to get up",
+			-- 	Command = "qprone_jump_doubletap"
+			-- })
+
+			-- panel:AddControl("Checkbox", {
+			-- 	Label = "Can press sprint to get up",
+			-- 	Command = "qprone_sprint"
+			-- })
+
+			-- panel:AddControl("Checkbox", {
+			-- 	Label = "Double-tap sprint to get up",
+			-- 	Command = "qprone_sprint_doubletap"
+			-- })
 
 			panel:AddControl("Numpad", {
 				Label = "Keybind",

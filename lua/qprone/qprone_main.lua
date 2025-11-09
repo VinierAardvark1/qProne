@@ -116,10 +116,12 @@ end)
 
 if CLIENT then
     local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
-    local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, false, "Enables double tapping your keybind to go prone.")
-    local qprone_jump = CreateClientConVar("qprone_jump_enable", "1", 1, false, "Enables using the jump key to exit prone.")
-    local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, false, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
-    local qprone_delay = CreateClientConVar("qprone_delay", 0.00, true, false, "Sets the delay between prone instances.", 0, 10)
+    local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
+    local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
+    local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+    local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
+    local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
+    local qprone_delay = CreateClientConVar("qprone_delay", 0.00, true, true, "Sets the delay between prone instances.", 0.00, 10.00)
 
     local last_request, resettime = 0, false
     local was_pressed, doubletap = false, true
@@ -135,7 +137,9 @@ if CLIENT then
             return
         end
 
-        if !ply:IsPlayer() or !ply:Alive() or ply:GetMoveType() == MOVETYPE_NOCLIP or ply:GetMoveType() == MOVETYPE_LADDER or !ply:OnGround() or ply:WaterLevel() > 2 then return end
+        if !ply:IsPlayer() or !ply:Alive() or ply:GetMoveType() == MOVETYPE_NOCLIP or ply:GetMoveType() == MOVETYPE_LADDER or !ply:OnGround() or ply:WaterLevel() > 2 then
+            return
+        end
 
         net.Start("lay_networking")
         net.WriteBool(b)
@@ -170,23 +174,40 @@ if CLIENT then
     concommand.Add( "qprone_lay", lay_request)
 end
 
-local qprone_jump_presstime = 0
-hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
-    if IsFirstTimePredicted() and ply:IsProne() and key == IN_JUMP then
-        if qprone_jump_enable == 1 then
-            ply:ToggleLay(false)
-        else
-            if qprone_jump_presstime > CurTime() then
-                ply:ToggleLay(false)
-            else
-                qprone_jump_presstime = CurTime() + 0.4 -- qprone_delay:GetInt()
-            end
-        end
-    end
-end)
+-- local qprone_jump_presstime = 0.15
+-- hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
+--     if IsFirstTimePredicted() and ply:IsProne() and key == IN_JUMP then
+--         if this_text_doesnt_matter == 1 then
+--             ply:ToggleLay()
+--         else
+--             if qprone_jump_presstime > CurTime() then
+--                 ply:ToggleLay()
+--             else
+--                 qprone_jump_presstime = CurTime() + 0.4 -- qprone_delay:GetInt()
+--             end
+--         end
+--     end
+-- end)
+
+-- local qprone_sprint_presstime = 0.15
+-- hook.Add("KeyPress", "qProne.qProne_Sprint", function(ply, key)
+--     if IsFirstTimePredicted() and ply:IsProne() and key == IN_SPEED then
+--         if this_text_doesnt_matter == 1 then
+--             ply:ToggleLay()
+--         else
+--             if qprone_sprint_presstime > CurTime() then
+--                 ply:ToggleLay()
+--             else
+--                 qprone_sprint_presstime = CurTime() + 0.4 -- qprone_delay:GetInt()
+--             end
+--         end
+--     end
+-- end)
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
-    if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP or p:GetMoveType() == MOVETYPE_LADDER or p:WaterLevel() > 2) then p:ToggleLay(false) end
+    if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP or p:GetMoveType() == MOVETYPE_LADDER or p:WaterLevel() > 2) then
+        p:ToggleLay(false)
+    end
 
     if p.layLerp and p.layLerp.running then
         p:SetViewOffset(Vector(0, 0, p.layLerp:GetValue()))
@@ -199,7 +220,9 @@ hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
             seq = p:LookupSequence( "prone_walktwohand" )
         else
             local weapon, holdType = p:GetActiveWeapon(), nil
-            if IsValid(weapon) then holdType = ((weapon:GetHoldType() != "" and weapon:GetHoldType()) or weapon.HoldType) end
+            if IsValid(weapon) then
+                holdType = ((weapon:GetHoldType() != "" and weapon:GetHoldType()) or weapon.HoldType)
+            end
 
             seq = p:LookupSequence(wep_anims[holdType] or "prone_ar2")
         end
@@ -213,16 +236,24 @@ if SERVER then
     util.AddNetworkString("lay_networking_layanim")
     local l_enabled = CreateConVar("qprone_enabled", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 
-    net.Receive( "lay_networking", function( len, ply ) if !l_enabled:GetBool() then ply:ToggleLay(false) return end
+    net.Receive( "lay_networking", function( len, ply )
+        if !l_enabled:GetBool() then
+            ply:ToggleLay(false)
+            return
+        end
         local b = net.ReadBool()
         ply:ToggleLay(b)
     end)
 
     hook.Add("DoPlayerDeath", "laying_death_exit", function(ply)
-        if ply:IsProne() then ply:ToggleLay(false) end
+        if ply:IsProne() then
+            ply:ToggleLay(false)
+        end
     end)
 
     hook.Add("PlayerSpawn", "prone.ExitOnDeath", function(ply)
-        if ply:IsProne() then ply:ToggleLay(false) end
+        if ply:IsProne() then
+            ply:ToggleLay(false)
+        end
     end)
 end
