@@ -117,10 +117,10 @@ end)
 if CLIENT then
     local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
     local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
-    local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
-    local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
-    local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
-    local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
+    -- local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
+    -- local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+    -- local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
+    -- local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
     local qprone_delay = CreateClientConVar("qprone_delay", 0.00, true, true, "Sets the delay between prone instances.", 0.00, 10.00)
 
     local last_request, resettime = 0, false
