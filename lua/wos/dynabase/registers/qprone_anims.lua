@@ -1,5 +1,5 @@
 wOS.DynaBase:RegisterSource({
-    Name = "qProne Animation",
+    Name = "qProne Animations",
     Type = WOS_DYNABASE.EXTENSION,
 
     -- model paths per gender:
