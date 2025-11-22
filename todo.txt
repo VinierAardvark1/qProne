@@ -1,6 +1,5 @@
 Fix "jump to exit prone" not working as intended
-Add "sprint to exit prone" (can be easily done after "jump to exit prone" is fixed)
-Allow "prone delay" convar to utilize the entire number
-Dynamic Height 2 compatability(?) Alternatively, make qProne 100% standalone (ie find a way to make the camera not weird)
+Add "sprint to exit prone" (easily done after previous problem is fixed)
+Allow "prone delay" convar to utilize the entire number (currently it ignores anything past the decimal)
+Dynamic Height 2 compatability(?) Alternatively, make qProne 100% standalone
 Omnimovement compatability(?)
-Make standalone from wOS (apparently it was not as easy as I thought... and I can't seem to figure out how the original prone mod does it, since it the code is the exact fucking same.)
