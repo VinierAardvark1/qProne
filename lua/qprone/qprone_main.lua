@@ -1,5 +1,13 @@
 local meta = FindMetaTable("Player")
 
+local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
+local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
+-- local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
+-- local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+-- local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
+-- local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
+local qprone_delay = CreateClientConVar("qprone_delay", 0.00, true, true, "Sets the delay between prone instances.", 0.00, 10.00)
+
 function meta:IsProne()
     return self:GetNW2Bool("IsLaying")
 end
@@ -41,88 +49,21 @@ hook.Add("SetupMove", "laying_move", function(ply, mv, cmd)
     end
 end)
 
-local cvarHeightEnabled = GetConVar("sv_dynamicheight")
-local cvarHeightMaxManual = GetConVar("sv_dynamicheight_max_manual")
-local cvarHeightMax = GetConVar("sv_dynamicheight_max")
-
-local function UpdateView(ply)
-    if cvarHeightEnabled:GetBool() then
-    -- Find the max and min height by spawning a dummy entity
-    local height_max = 64
-
-    -- Finds model's height
-    local entity = ents.Create("base_anim")
-    local entity2 = ents.Create("base_anim")
-
-    entity:SetModel(ply:GetModel())
-    entity:ResetSequence(entity:LookupSequence("idle_all_01"))
-    local bone = entity:LookupBone("ValveBiped.Bip01_Neck1")
-        if bone then
-            height_max = entity:GetBonePosition(bone).z + 5
-        end
-
-    -- Removes test entities
-    entity:Remove()
-    entity2:Remove()
-
-    -- Update player height
-    local max = cvarHeightMax:GetInt()
-
-    if cvarHeightMaxManual:GetBool() then
-        return max
-    else
-        return height_max
-    end
-
-    else
-        if ply.ec_ViewChanged then
-            ply.ec_ViewChanged = nil
-        return 64
-        end
-    end
-        return ply:GetViewOffset().z
-  end
-
-hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply, name, old, b)
-    if name == "IsLaying" and ply:IsPlayer() then
-        if b then -- Sets hull while prone.
-            ply:SetHull(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull))
-            ply:SetHullDuck(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull))
-        else
-            ply:ResetHull()
-        end
+hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply,name,old,b)
+    if name == "IsLaying" && ply:IsPlayer() then
+        if b then 
+            ply:SetHull(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull)) 
+            ply:SetHullDuck(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull)) 
+        else ply:ResetHull() end
 
         if SERVER then
-            local from, to, factor, mode
-            if b then
-                from = UpdateView(ply)
-                to = qprone.goProne.ViewZ
-                factor = 0.7
-                mode = TWEEN_EASE_BOUNCE_OUT
-            else
-                from = qprone.goProne.ViewZ
-                to = UpdateView(ply)
-                factor = 0.3
-                mode = TWEEN_EASE_SINE_IN
-            end
-
-            ply.layLerp = Tween(from, to, factor, mode)
-            ply.layLerp:Start()
+            local from, to = (b && 64 || qprone.goProne.ViewZ), (b && qprone.goProne.ViewZ || 64)
+            ply.layLerp = Tween(from, to, (to == qprone.goProne.ViewZ && 0.7) || 0.3, (to == qprone.goProne.ViewZ && TWEEN_EASE_BOUNCE_OUT) || TWEEN_EASE_SINE_IN ) ply.layLerp:Start()
         end
     end
-
 end)
 
-
 if CLIENT then
-    local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
-    local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
-    -- local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
-    -- local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
-    -- local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
-    -- local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
-    local qprone_delay = CreateClientConVar("qprone_delay", 0.00, true, true, "Sets the delay between prone instances.", 0.00, 10.00)
-
     local last_request, resettime = 0, false
     local was_pressed, doubletap = false, true
 
@@ -183,7 +124,7 @@ end
 --             if qprone_jump_presstime > CurTime() then
 --                 ply:ToggleLay()
 --             else
---                 qprone_jump_presstime = CurTime() + 0.4 -- qprone_delay:GetInt()
+--                 qprone_jump_presstime = CurTime() + qprone_delay:GetInt()
 --             end
 --         end
 --     end
@@ -198,7 +139,7 @@ end
 --             if qprone_sprint_presstime > CurTime() then
 --                 ply:ToggleLay()
 --             else
---                 qprone_sprint_presstime = CurTime() + 0.4 -- qprone_delay:GetInt()
+--                 qprone_sprint_presstime = CurTime() + qprone_delay:GetInt()
 --             end
 --         end
 --     end
