@@ -1,3 +1,4 @@
+AddCSLuaFile()
 tween = {}
 
 local isfunction = isfunction
