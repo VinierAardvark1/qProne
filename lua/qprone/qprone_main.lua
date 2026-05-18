@@ -103,7 +103,7 @@ if CLIENT then
 					if !qprone_doubletap:GetBool() or doubletap then
 						lay_request()
 
-						last_request = CurTime() + qprone_delay:GetInt()
+						last_request = CurTime() + qprone_delay:GetFloat()
 					end
 				end
 
