@@ -7,7 +7,8 @@ local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables us
 local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
 local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
 local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
-local qprone_delay = CreateClientConVar("qprone_delay", 0, true, true, "Sets the delay between prone instances.", 0, 10, 2)
+local qprone_delay = CreateClientConVar("qprone_delay", 0.5, true, true, "Sets the delay between prone instances.", 0.5, 5, 2)
+local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
 
 function meta:IsProne()
 	return self:GetNW2Bool("IsLaying")
@@ -44,6 +45,12 @@ local wep_anims = {
 	smg			= "prone_smg1"
 }
 
+qprone = {}
+qprone.goProne = {}
+qprone.goProne.MaxLaySpeed = 40
+qprone.goProne.ViewZ = 25
+qprone.goProne.Hull = 24
+
 hook.Add("SetupMove", "laying_move", function(ply, mv, cmd)
 	if ply:IsProne() then
 		if mv:KeyDown(IN_JUMP) then mv:SetButtons(bit.band(mv:GetButtons(), bit.bnot(IN_JUMP))) end
@@ -54,7 +61,7 @@ hook.Add("SetupMove", "laying_move", function(ply, mv, cmd)
 	end
 end)
 
-hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply,name,old,b)
+hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(ply, name, old, b)
 	if name == "IsLaying" && ply:IsPlayer() then
 		if b then 
 			ply:SetHull(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull)) 
@@ -63,14 +70,14 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
 
 		if SERVER then
 			local from, to = (b && 64 || qprone.goProne.ViewZ), (b && qprone.goProne.ViewZ || 64)
-			ply.layLerp = Tween(from, to, (to == qprone.goProne.ViewZ && 0.7) || 0.3, (to == qprone.goProne.ViewZ && TWEEN_EASE_BOUNCE_OUT) || TWEEN_EASE_SINE_IN ) ply.layLerp:Start()
+			ply.layLerp = Tween(from, to, (to == qprone.goProne.ViewZ && 0.5) || 0.25, (to == qprone.goProne.ViewZ && TWEEN_EASE_BOUNCE_OUT) || TWEEN_EASE_SINE_IN ) ply.layLerp:Start()
 		end
 	end
 end)
 
 if CLIENT then
 	local last_request, resettime = 0, false
-	local was_pressed, doubletap = false, true
+	local was_pressed = false
 
 	function lay_request(force)
 		local ply = qprone.LP
@@ -78,9 +85,13 @@ if CLIENT then
 		local tr = util.TraceEntity({ start = ply:GetPos(), endpos = ply:GetPos() + Vector(0, 0, 65 - qprone.goProne.Hull), filter = ply }, ply)
 
 		if !b and tr.Hit and force != true then
-			ply:ChatPrint(qprone.goProne.CantGetUpText)
-			ply:EmitSound("buttons/button17.wav")
-			return
+			if qprone_cantgetup:GetBool() then
+				ply:ChatPrint(qprone.goProne.CantGetUpText)
+				ply:EmitSound("buttons/button17.wav")
+				return
+			else
+				return
+			end
 		end
 
 		if !ply:IsPlayer() or !ply:Alive() or ply:GetMoveType() == MOVETYPE_NOCLIP or ply:GetMoveType() == MOVETYPE_LADDER or !ply:OnGround() or ply:WaterLevel() > 2 then
@@ -96,11 +107,10 @@ if CLIENT then
 		if ply:OnGround() and !vgui.GetKeyboardFocus() and !gui.IsGameUIVisible() and !gui.IsConsoleVisible() and system.HasFocus() or system.IsLinux() then
 			if input.IsKeyDown(qprone_keybind:GetInt()) then
 				was_pressed = true
-				resettime = CurTime() + 0.11 -- Time between button presses in seconds (make into slider?)
+				resettime = CurTime() + 0.15
 			else
 				if was_pressed and last_request < CurTime() then
-					doubletap = !doubletap
-					if !qprone_doubletap:GetBool() or doubletap then
+					if !qprone_doubletap:GetBool() then
 						lay_request()
 
 						last_request = CurTime() + qprone_delay:GetFloat()
@@ -112,42 +122,66 @@ if CLIENT then
 
 			if resettime != false and resettime < CurTime() then
 				resettime = false
-				doubletap = true
 			end
 		end
 	end)
 
-	concommand.Add( "qprone_lay", lay_request)
+	hook.Add("InitPostEntity","qprone_loadcfg", function()
+		qprone.LP = LocalPlayer()
+		qprone.goProne.CantGetUpText = "qProne | There is not enough room to get up here."
+	end)
+	
+	hook.Add("PopulateToolMenu", "qprone_options_menu", function()
+		spawnmenu.AddToolMenuOption("Options", "qProne Settings", "qprone_opts", "Convars", "", "", function(panel)
+			local sv, cl = vgui.Create("DForm"), vgui.Create("DForm")
+			local binds = vgui.Create("DForm")
+			panel:AddItem(cl)
+			cl:Help("Config menu for qProne.")
+
+			panel:AddControl("Numpad", {
+				Label = "Keybind",
+				Command = "qprone_keybind"
+			})
+			
+			cl:CheckBox("Enable Quick Prone", "qprone_enabled")
+			cl:CheckBox("Double-tap to enter prone", "qprone_doubletap")
+			cl:CheckBox([[Enable "Can't Get Up" error message]], "qprone_cantgetup")
+			cl:CheckBox("Can press jump to exit prone", "qprone_jump")
+			cl:CheckBox("Double-tap jump to exit prone", "qprone_jump_doubletap")
+			cl:CheckBox("Can press sprint to exit prone", "qprone_sprint")
+			cl:CheckBox("Double-tap sprint to exit prone", "qprone_sprint_doubletap")
+			cl:NumSlider("qProne Delay", "qprone_delay", 0.5, 5, 2)
+		end)
+	end)
 end
 
-local qprone_jump_presstime = 0
+local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
 hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
-	 if IsFirstTimePredicted() and ply:IsProne() and qprone_jump:GetBool() and key == IN_JUMP then
-		 if not qprone_jump_doubletap:GetBool() then
-			 ply:ToggleLay()
-		 else
-			 if qprone_jump_presstime > CurTime() then
-				 ply:ToggleLay()
-			 else
-				 qprone_jump_presstime = CurTime() + 0.5
-			 end
-		 end
-	 end
+	if IsFirstTimePredicted() and ply:IsProne() and qprone_jump:GetBool() and key == IN_JUMP then
+		if !qprone_jump_doubletap:GetBool() then
+			ply:ToggleLay()
+		else
+			if qprone_jump_presstime > CurTime() then
+				ply:ToggleLay()
+			else
+				qprone_jump_presstime = CurTime() + 0.5
+			end
+		end
+	end
 end)
 
-local qprone_sprint_presstime = 0
 hook.Add("KeyPress", "qProne.qProne_Sprint", function(ply, key)
-	 if IsFirstTimePredicted() and ply:IsProne() and qprone_sprint:GetBool() and key == IN_SPEED then
-		 if not qprone_sprint_doubletap:GetBool() then
-			 ply:ToggleLay()
-		 else
-			 if qprone_sprint_presstime > CurTime() then
-				 ply:ToggleLay()
-			 else
-				 qprone_sprint_presstime = CurTime() + 0.5
-			 end
-		 end
-	 end
+	if IsFirstTimePredicted() and ply:IsProne() and qprone_sprint:GetBool() and key == IN_SPEED then
+		if !qprone_sprint_doubletap:GetBool() then
+			ply:ToggleLay()
+		else
+			if qprone_sprint_presstime > CurTime() then
+				ply:ToggleLay()
+			else
+				qprone_sprint_presstime = CurTime() + 0.5
+			end
+		end
+	end
 end)
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
@@ -177,29 +211,6 @@ hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
 	end
 end)
 
-if CLIENT then
-	hook.Add("PopulateToolMenu", "qprone_options_menu", function()
-		spawnmenu.AddToolMenuOption("Options", "qProne Settings", "qprone_opts", "Convars", "", "", function(panel)
-			local sv, cl = vgui.Create("DForm"), vgui.Create("DForm")
-			local binds = vgui.Create("DForm")
-			panel:AddItem(cl)
-			cl:Help("Config menu for qProne.")
-
-			panel:AddControl("Numpad", {
-				Label = "Keybind",
-				Command = "qprone_keybind"
-			})
-			
-			cl:CheckBox("Enable Quick Prone", "qprone_enabled")
-			cl:CheckBox("Double-tap to prone?", "qprone_doubletap")
-			cl:CheckBox("Can press jump to get up", "qprone_jump")
-			cl:CheckBox("Double-tap jump to get up", "qprone_jump_doubletap")
-			cl:CheckBox("Can press sprint to get up", "qprone_sprint")
-			cl:CheckBox("Double-tap sprint to get up", "qprone_sprint_doubletap")
-			cl:NumSlider("qProne Delay", "qprone_delay", 0, 10, 2)
-		end)
-	end)
-end
 
 if SERVER then
 	util.AddNetworkString("lay_networking")
