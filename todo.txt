@@ -1,5 +1,5 @@
 General code cleanup/rewrite
 Make "jump to exit prone" not make you jump
-Fix error that only appears when making changes to the lua
-Fix sprint/jump to exit prone ignoring can't get up (change ply:ToggleLay() to lay_request?)
-Add "prone delay" to sprint/jump to exit prone OR change "prone delay" to be how soon you can re-enter prone after exiting
+Fix error that only appears when making changes to the lua (something about ply being nil)
+Fix sprint/jump to exit prone ignoring can't get up state (change ply:ToggleLay() to lay_request?)
+Change "prone delay" to be how soon you can re-enter prone after exiting

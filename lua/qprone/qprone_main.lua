@@ -77,7 +77,7 @@ end)
 
 if CLIENT then
 	local last_request, resettime = 0, false
-	local was_pressed = false
+	local was_pressed, doubletap = false, true
 
 	function lay_request(force)
 		local ply = qprone.LP
@@ -110,7 +110,8 @@ if CLIENT then
 				resettime = CurTime() + 0.15
 			else
 				if was_pressed and last_request < CurTime() then
-					if !qprone_doubletap:GetBool() then
+					doubletap = !doubletap
+					if !qprone_doubletap:GetBool() or doubletap then
 						lay_request()
 
 						last_request = CurTime() + qprone_delay:GetFloat()
@@ -122,6 +123,7 @@ if CLIENT then
 
 			if resettime != false and resettime < CurTime() then
 				resettime = false
+				doubletap = true
 			end
 		end
 	end)
