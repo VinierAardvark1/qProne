@@ -102,7 +102,9 @@ if CLIENT then
 		net.SendToServer()
 	end
 
-	hook.Add( "StartCommand", "laying_move_start", function( ply, mv )
+	local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
+
+	hook.Add( "StartCommand", "laying_move_start", function( ply, cmd )
 		if ply:OnGround() and !vgui.GetKeyboardFocus() and !gui.IsGameUIVisible() and !gui.IsConsoleVisible() and system.HasFocus() or system.IsLinux() then
 			if input.IsKeyDown(qprone_keybind:GetInt()) then
 				was_pressed = true
@@ -118,6 +120,35 @@ if CLIENT then
 				end
 
 				was_pressed = false
+			end
+			if ply:IsProne() then
+				if qprone_jump:GetBool() and ply:KeyPressed(IN_JUMP) then
+					if !qprone_jump_doubletap:GetBool() then
+						lay_request()
+						cmd:RemoveKey(IN_JUMP)
+					else
+						if qprone_jump_presstime > CurTime() then
+							lay_request()
+							cmd:RemoveKey(IN_JUMP)
+						else
+							qprone_jump_presstime = CurTime() + qprone_delay:GetFloat()
+						end
+					end
+				end
+				if qprone_sprint:GetBool() and ply:KeyPressed(IN_SPEED) then
+					if !qprone_sprint_doubletap:GetBool() then
+						
+						lay_request()
+						cmd:RemoveKey(IN_SPEED)
+					else
+						if qprone_sprint_presstime > CurTime() then
+							lay_request()
+							cmd:RemoveKey(IN_SPEED)
+						else
+							qprone_sprint_presstime = CurTime() + qprone_delay:GetFloat()
+						end
+					end
+				end
 			end
 
 			if resettime != false and resettime < CurTime() then
@@ -141,9 +172,7 @@ if CLIENT then
 			cl:SetName("Client")
 			cl:Help("Config menu for qProne.")
 			local binder = vgui.Create("DBinder")
-			-- binder:SetConsoleCommand("qprone_keybind")
 			binder:SetConVar("qprone_keybind")
-			-- binder:SetValue(qprone_keybind:GetInt())
 			cl:Help("Keybind")
 			cl:AddItem(binder)
 			
@@ -159,33 +188,7 @@ if CLIENT then
 	end)
 end
 
-local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
-hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
-	if IsFirstTimePredicted() and ply:IsProne() and qprone_jump:GetBool() and key == IN_JUMP then
-		if !qprone_jump_doubletap:GetBool() then
-			ply:ToggleLay()
-		else
-			if qprone_jump_presstime > CurTime() then
-				ply:ToggleLay()
-			else
-				qprone_jump_presstime = CurTime() + 0.5
-			end
-		end
-	end
-end)
-
-hook.Add("KeyPress", "qProne.qProne_Sprint", function(ply, key)
-	if IsFirstTimePredicted() and ply:IsProne() and qprone_sprint:GetBool() and key == IN_SPEED then
-		if !qprone_sprint_doubletap:GetBool() then
-			ply:ToggleLay()
-		else
-			if qprone_sprint_presstime > CurTime() then
-				ply:ToggleLay()
-			else
-				qprone_sprint_presstime = CurTime() + 0.5
-			end
-		end
-	end
+hook.Add("KeyPress", "qProne.Main", function(ply, key)
 end)
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
