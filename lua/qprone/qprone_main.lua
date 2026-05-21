@@ -1,15 +1,6 @@
 AddCSLuaFile()
 local meta = FindMetaTable("Player")
 
-local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
-local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
-local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
-local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
-local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
-local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
-local qprone_delay = CreateClientConVar("qprone_delay", 0.5, true, true, "Sets the delay between prone instances.", 0.5, 5, 2)
-local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
-
 function meta:IsProne()
 	return self:GetNW2Bool("IsLaying")
 end
@@ -76,11 +67,19 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
 end)
 
 if CLIENT then
+	local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
+	local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
+	local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
+	local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
+	local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
+	local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
+	local qprone_delay = CreateClientConVar("qprone_delay", 0.5, true, true, "Sets the delay between prone instances.", 0.5, 5, 2)
+	local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
 	local last_request, resettime = 0, false
 	local was_pressed, doubletap = false, true
 
 	function lay_request(force)
-		local ply = qprone.LP
+		local ply = LocalPlayer()
 		local b = !ply:GetNW2Bool("IsLaying")
 		local tr = util.TraceEntity({ start = ply:GetPos(), endpos = ply:GetPos() + Vector(0, 0, 65 - qprone.goProne.Hull), filter = ply }, ply)
 
@@ -134,18 +133,21 @@ if CLIENT then
 	end)
 	
 	hook.Add("PopulateToolMenu", "qprone_options_menu", function()
-		spawnmenu.AddToolMenuOption("Options", "qProne Settings", "qprone_opts", "Convars", "", "", function(panel)
-			local sv, cl = vgui.Create("DForm"), vgui.Create("DForm")
-			local binds = vgui.Create("DForm")
+		spawnmenu.AddToolMenuOption("Options", "qProne", "qprone_opts", "Settings", nil, nil, function(panel)
+			local sv, cl = vgui.Create("ControlPanel"), vgui.Create("ControlPanel")
+			panel:AddItem(sv)
 			panel:AddItem(cl)
+			sv:SetName("Server")
+			cl:SetName("Client")
 			cl:Help("Config menu for qProne.")
-
-			panel:AddControl("Numpad", {
-				Label = "Keybind",
-				Command = "qprone_keybind"
-			})
+			local binder = vgui.Create("DBinder")
+			-- binder:SetConsoleCommand("qprone_keybind")
+			binder:SetConVar("qprone_keybind")
+			-- binder:SetValue(qprone_keybind:GetInt())
+			cl:Help("Keybind")
+			cl:AddItem(binder)
 			
-			cl:CheckBox("Enable Quick Prone", "qprone_enabled")
+			sv:CheckBox("Enable Quick Prone", "qprone_enabled")
 			cl:CheckBox("Double-tap to enter prone", "qprone_doubletap")
 			cl:CheckBox([[Enable "Can't Get Up" error message]], "qprone_cantgetup")
 			cl:CheckBox("Can press jump to exit prone", "qprone_jump")
