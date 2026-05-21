@@ -188,9 +188,6 @@ if CLIENT then
 	end)
 end
 
-hook.Add("KeyPress", "qProne.Main", function(ply, key)
-end)
-
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
 	if (p:IsProne() and SERVER) and (p:GetMoveType() == MOVETYPE_NOCLIP or p:GetMoveType() == MOVETYPE_LADDER or p:WaterLevel() > 2) then
 		p:ToggleLay(false)
