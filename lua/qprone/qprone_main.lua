@@ -78,6 +78,31 @@ if CLIENT then
 	local last_request, resettime = 0, false
 	local was_pressed, doubletap = false, true
 
+	print("AAAAAAAAAAAAAAAAA", CurTime())
+	hook.Add("PopulateToolMenu", "qprone_options_menu", function()
+		spawnmenu.AddToolMenuOption("Options", "qProne", "qprone_opts", "Settings", nil, nil, function(panel)
+			local sv, cl = vgui.Create("ControlPanel"), vgui.Create("ControlPanel")
+			sv:SetName("Server")
+			cl:SetName("Client")
+			panel:AddItem(sv)
+			panel:AddItem(cl)
+			cl:Help("Config menu for qProne.")
+			local binder = vgui.Create("DBinder")
+			binder:SetConVar("qprone_keybind")
+			cl:Help("Keybind")
+			cl:AddItem(binder)
+			
+			sv:CheckBox("Enable Quick Prone", "qprone_enabled")
+			cl:CheckBox("Double-tap to enter prone", "qprone_doubletap")
+			cl:CheckBox([[Enable "Can't Get Up" error message]], "qprone_cantgetup")
+			cl:CheckBox("Can press jump to exit prone", "qprone_jump")
+			cl:CheckBox("Double-tap jump to exit prone", "qprone_jump_doubletap")
+			cl:CheckBox("Can press sprint to exit prone", "qprone_sprint")
+			cl:CheckBox("Double-tap sprint to exit prone", "qprone_sprint_doubletap")
+			cl:NumSlider("qProne Delay", "qprone_delay", 0.5, 5, 2)
+		end)
+	end)
+
 	function lay_request(force)
 		local ply = LocalPlayer()
 		local b = !ply:GetNW2Bool("IsLaying")
@@ -163,29 +188,6 @@ if CLIENT then
 		qprone.goProne.CantGetUpText = "qProne | There is not enough room to get up here."
 	end)
 	
-	hook.Add("PopulateToolMenu", "qprone_options_menu", function()
-		spawnmenu.AddToolMenuOption("Options", "qProne", "qprone_opts", "Settings", nil, nil, function(panel)
-			local sv, cl = vgui.Create("ControlPanel"), vgui.Create("ControlPanel")
-			panel:AddItem(sv)
-			panel:AddItem(cl)
-			sv:SetName("Server")
-			cl:SetName("Client")
-			cl:Help("Config menu for qProne.")
-			local binder = vgui.Create("DBinder")
-			binder:SetConVar("qprone_keybind")
-			cl:Help("Keybind")
-			cl:AddItem(binder)
-			
-			sv:CheckBox("Enable Quick Prone", "qprone_enabled")
-			cl:CheckBox("Double-tap to enter prone", "qprone_doubletap")
-			cl:CheckBox([[Enable "Can't Get Up" error message]], "qprone_cantgetup")
-			cl:CheckBox("Can press jump to exit prone", "qprone_jump")
-			cl:CheckBox("Double-tap jump to exit prone", "qprone_jump_doubletap")
-			cl:CheckBox("Can press sprint to exit prone", "qprone_sprint")
-			cl:CheckBox("Double-tap sprint to exit prone", "qprone_sprint_doubletap")
-			cl:NumSlider("qProne Delay", "qprone_delay", 0.5, 5, 2)
-		end)
-	end)
 end
 
 hook.Add("CalcMainActivity", "laying_anim", function(p, vel)
