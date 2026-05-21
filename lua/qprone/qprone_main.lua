@@ -168,7 +168,7 @@ hook.Add("KeyPress", "qProne.qProne_Jump", function(ply, key)
 			if qprone_jump_presstime > CurTime() then
 				ply:ToggleLay()
 			else
-				qprone_jump_presstime = CurTime() + 0.5
+				qprone_jump_presstime = CurTime() + qprone_delay:GetFloat()
 			end
 		end
 	end
@@ -182,7 +182,7 @@ hook.Add("KeyPress", "qProne.qProne_Sprint", function(ply, key)
 			if qprone_sprint_presstime > CurTime() then
 				ply:ToggleLay()
 			else
-				qprone_sprint_presstime = CurTime() + 0.5
+				qprone_sprint_presstime = CurTime() + qprone_delay:GetFloat()
 			end
 		end
 	end
