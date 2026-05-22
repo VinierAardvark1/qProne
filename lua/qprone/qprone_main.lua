@@ -75,12 +75,12 @@ if CLIENT then
 	local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
 	local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
 	local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
-	local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
-	local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
-	local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
-	local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
+	local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Allows the use of your jump button to exit prone.")
+	local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces double tapping jump to exit prone. Does nothing if qprone_jump = 0")
+	local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Allows the use of your sprint key to exit prone.")
+	local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces double tapping sprint to exit prone. Does nothing if qprone_sprint = 0")
 	local qprone_delay = CreateClientConVar("qprone_delay", 0.5, true, true, "Sets the delay between being allowed to re-enter prone.", 0.5, 5, 2)
-	local qprone_doubletap_resettime = CreateClientConVar("qprone_doubletap_resettime", 0.25, true, true, "Sets how long you can go between key presses for double tapping to work.", 0.1, 2, 2)
+	local qprone_doubletap_resettime = CreateClientConVar("qprone_doubletap_resettime", 0.25, true, true, "Sets the allowed delay between key presses for double tapping.", 0.1, 2, 2)
 	local last_request, resettime = 0, false
 	local was_pressed, doubletap = false, true
 	local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
