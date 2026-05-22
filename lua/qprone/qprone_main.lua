@@ -74,12 +74,13 @@ end)
 if CLIENT then
 	local qprone_keybind = CreateClientConVar("qprone_keybind", 83, true, false, "This convar uses the numerical designation of each key. Go to Options > qProne Client Settings to change as normal.")
 	local qprone_doubletap = CreateClientConVar("qprone_doubletap", 1, true, true, "Enables double tapping your keybind to go prone.")
+	local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
 	local qprone_jump = CreateClientConVar("qprone_jump", 1, true, true, "Enables using the jump key to exit prone.")
 	local qprone_jump_doubletap = CreateClientConVar("qprone_jump_doubletap", 1, true, true, "Forces you to double tap jump to exit prone. Does nothing if qprone_jump = 0")
 	local qprone_sprint = CreateClientConVar("qprone_sprint", 1, true, true, "Enables using the sprint key to exit prone.")
 	local qprone_sprint_doubletap = CreateClientConVar("qprone_sprint_doubletap", 1, true, true, "Forces you to double tap sprint to exit prone. Does nothing if qprone_sprint = 0")
-	local qprone_delay = CreateClientConVar("qprone_delay", 0.5, true, true, "Sets the delay between prone instances.", 0.5, 5, 2)
-	local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
+	local qprone_delay = CreateClientConVar("qprone_delay", 0.5, true, true, "Sets the delay between being allowed to re-enter prone.", 0.5, 5, 2)
+	local qprone_doubletap_resettime = CreateClientConVar("qprone_doubletap_resettime", 0.25, true, true, "Sets how long you can go between key presses for double tapping to work.", 0.1, 2, 2)
 	local last_request, resettime = 0, false
 	local was_pressed, doubletap = false, true
 	local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
@@ -99,12 +100,18 @@ if CLIENT then
 			
 			sv:CheckBox("Enable Quick Prone", "qprone_enabled")
 			cl:CheckBox("Double-tap to enter prone", "qprone_doubletap")
+
 			cl:CheckBox([[Enable "Can't Get Up" error message]], "qprone_cantgetup")
+
 			cl:CheckBox("Can press jump to exit prone", "qprone_jump")
 			cl:CheckBox("Double-tap jump to exit prone", "qprone_jump_doubletap")
+
 			cl:CheckBox("Can press sprint to exit prone", "qprone_sprint")
 			cl:CheckBox("Double-tap sprint to exit prone", "qprone_sprint_doubletap")
-			cl:NumSlider("qProne Delay", "qprone_delay", 0.5, 5, 2)
+
+			cl:NumSlider("Prone Delay", "qprone_delay", 0.5, 5, 2)
+
+			cl:NumSlider("DT Reset Time", "qprone_doubletap_resettime", 0.1, 2, 2)
 		end)
 	end)
 
@@ -159,7 +166,7 @@ if CLIENT then
 							lay_request()
 							cmd:RemoveKey(IN_JUMP)
 						else
-							qprone_jump_presstime = CurTime() + 0.5
+							qprone_jump_presstime = CurTime() + qprone_doubletap_resettime:GetFloat()
 						end
 					end
 				end
@@ -172,7 +179,7 @@ if CLIENT then
 							lay_request()
 							cmd:RemoveKey(IN_SPEED)
 						else
-							qprone_sprint_presstime = CurTime() + 0.5
+							qprone_sprint_presstime = CurTime() + qprone_doubletap_resettime:GetFloat()
 						end
 					end
 				end
