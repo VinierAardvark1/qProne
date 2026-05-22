@@ -11,7 +11,9 @@ end
 
 function meta:ToggleLay(arg)
 	if CLIENT then RunConsoleCommand("qprone_lay")
-	else return self:SetNW2Bool("IsLaying", arg) end
+	else
+		return self:SetNW2Bool("IsLaying", arg)
+	end
 end
 
 local wep_anims = {
@@ -46,7 +48,8 @@ hook.Add("SetupMove", "laying_move", function(ply, mv, cmd)
 	if ply:IsProne() then
 		if mv:KeyDown(IN_JUMP) then mv:SetButtons(bit.band(mv:GetButtons(), bit.bnot(IN_JUMP))) end
 		if mv:KeyDown(IN_DUCK) then mv:SetButtons(bit.band(mv:GetButtons(), bit.bnot(IN_DUCK))) end
-
+		if mv:KeyDown(IN_SPEED) then mv:SetButtons(bit.band(mv:GetButtons(), bit.bnot(IN_SPEED))) end
+		
 		mv:SetMaxClientSpeed(qprone.goProne.MaxLaySpeed)
 		mv:SetMaxSpeed(qprone.goProne.MaxLaySpeed)
 	end
@@ -57,7 +60,9 @@ hook.Add("EntityNetworkedVarChanged", "laying_nw_changed_behaviour", function(pl
 		if b then 
 			ply:SetHull(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull)) 
 			ply:SetHullDuck(Vector(-16, -16, 0), Vector(16, 16, qprone.goProne.Hull)) 
-		else ply:ResetHull() end
+		else
+			ply:ResetHull()
+		end
 
 		if SERVER then
 			local from, to = (b && 64 || qprone.goProne.ViewZ), (b && qprone.goProne.ViewZ || 64)
@@ -77,8 +82,9 @@ if CLIENT then
 	local qprone_cantgetup = CreateClientConVar("qprone_cantgetup", 1, true, true, "Enable the error noise and chat message for trying to exit prone when not possible.")
 	local last_request, resettime = 0, false
 	local was_pressed, doubletap = false, true
+	local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
 
-	print("AAAAAAAAAAAAAAAAA", CurTime())
+	-- print("qProne is functioning as intended.", CurTime())
 	hook.Add("PopulateToolMenu", "qprone_options_menu", function()
 		spawnmenu.AddToolMenuOption("Options", "qProne", "qprone_opts", "Settings", nil, nil, function(panel)
 			local sv, cl = vgui.Create("ControlPanel"), vgui.Create("ControlPanel")
@@ -86,7 +92,6 @@ if CLIENT then
 			cl:SetName("Client")
 			panel:AddItem(sv)
 			panel:AddItem(cl)
-			cl:Help("Config menu for qProne.")
 			local binder = vgui.Create("DBinder")
 			binder:SetConVar("qprone_keybind")
 			cl:Help("Keybind")
@@ -127,8 +132,6 @@ if CLIENT then
 		net.SendToServer()
 	end
 
-	local qprone_jump_presstime, qprone_sprint_presstime = 0, 0
-
 	hook.Add( "StartCommand", "laying_move_start", function( ply, cmd )
 		if ply:OnGround() and !vgui.GetKeyboardFocus() and !gui.IsGameUIVisible() and !gui.IsConsoleVisible() and system.HasFocus() or system.IsLinux() then
 			if input.IsKeyDown(qprone_keybind:GetInt()) then
@@ -156,13 +159,12 @@ if CLIENT then
 							lay_request()
 							cmd:RemoveKey(IN_JUMP)
 						else
-							qprone_jump_presstime = CurTime() + qprone_delay:GetFloat()
+							qprone_jump_presstime = CurTime() + 0.5
 						end
 					end
 				end
 				if qprone_sprint:GetBool() and ply:KeyPressed(IN_SPEED) then
 					if !qprone_sprint_doubletap:GetBool() then
-						
 						lay_request()
 						cmd:RemoveKey(IN_SPEED)
 					else
@@ -170,7 +172,7 @@ if CLIENT then
 							lay_request()
 							cmd:RemoveKey(IN_SPEED)
 						else
-							qprone_sprint_presstime = CurTime() + qprone_delay:GetFloat()
+							qprone_sprint_presstime = CurTime() + 0.5
 						end
 					end
 				end
@@ -221,10 +223,10 @@ end)
 if SERVER then
 	util.AddNetworkString("lay_networking")
 	util.AddNetworkString("lay_networking_layanim")
-	local l_enabled = CreateConVar("qprone_enabled", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
+	local qprone_enabled = CreateConVar("qprone_enabled", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 
 	net.Receive( "lay_networking", function( len, ply )
-		if !l_enabled:GetBool() then
+		if !qprone_enabled:GetBool() then
 			ply:ToggleLay(false)
 			return
 		end
